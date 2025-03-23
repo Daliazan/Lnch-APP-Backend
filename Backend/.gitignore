@@ -1,0 +1,24 @@
+# .NET Core
+**/bin/
+**/obj/
+
+# User-specific files
+.idea/
+.vscode/
+
+# Windows specific files
+Thumbs.db
+ehthumbs.db
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# .NET Core
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS for Mac
+.vs2019/
+.vs2017/
