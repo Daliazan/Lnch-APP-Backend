@@ -11,9 +11,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("http://localhost:5173")
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
+                           policy.AllowAnyOrigin()  // Tillåter alla domäner (React + andra)
+                  .AllowAnyMethod()  // Tillåter GET, POST, PUT, DELETE osv.
+                  .AllowAnyHeader(); // Tillåter alla headers
                       });
 });
 
