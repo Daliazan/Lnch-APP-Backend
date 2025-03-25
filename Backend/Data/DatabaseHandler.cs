@@ -1,19 +1,20 @@
+using System;
 using Microsoft.Data.Sqlite;
 
 namespace Backend.Data
 {
     public class DatabaseHandler
     {
-        private readonly string _connectionString;
+        private readonly string connectionString;
 
         public DatabaseHandler(string connectionString)
         {
-            _connectionString = connectionString;
+            this.connectionString = connectionString;
         }
 
         public void InitializeDatabase()
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            using (var connection = new SqliteConnection(connectionString))
             {
                 connection.Open();
 
@@ -37,10 +38,23 @@ namespace Backend.Data
 
         public void InsertRestaurants()
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            using (var connection = new SqliteConnection(connectionString))
             {
                 connection.Open();
 
+                // ✅ Kolla om data redan finns
+                var checkQuery = "SELECT COUNT(*) FROM Restaurants";
+                using (var checkCmd = new SqliteCommand(checkQuery, connection))
+                {
+                    var count = Convert.ToInt32(checkCmd.ExecuteScalar());
+                    if (count > 0)
+                    {
+                        Console.WriteLine("ℹ️ Data already exists. Skipping insert.");
+                        return;
+                    }
+                }
+
+                // ✅ Lägg till restauranger om tabellen är tom
                 string insertQuery = @"
                     INSERT INTO Restaurants (Name, Cuisine, Distance, PriceRange) VALUES 
                     ('Marrakesh', 'Moroccan Buffet', 100, '100-200kr'),
@@ -58,30 +72,27 @@ namespace Backend.Data
                     command.ExecuteNonQuery();
                 }
 
-                Console.WriteLine("✅ Restaurants inserted.");
+                Console.WriteLine("✅ Restaurants inserted successfully.");
             }
         }
 
         public void DisplayRestaurants()
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+            string selectQuery = "SELECT * FROM Restaurants";
+
+            using var command = new SqliteCommand(selectQuery, connection);
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
             {
-                connection.Open();
-                string selectQuery = "SELECT * FROM Restaurants";
+                int id = reader.GetInt32(reader.GetOrdinal("Id"));
+                string name = reader.GetString(reader.GetOrdinal("Name"));
+                string cuisine = reader.GetString(reader.GetOrdinal("Cuisine"));
+                int distance = reader.GetInt32(reader.GetOrdinal("Distance"));
+                string priceRange = reader.GetString(reader.GetOrdinal("PriceRange"));
 
-                using var command = new SqliteCommand(selectQuery, connection);
-                using var reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    int id = reader.GetInt32(reader.GetOrdinal("Id"));
-                    string name = reader.GetString(reader.GetOrdinal("Name"));
-                    string cuisine = reader.GetString(reader.GetOrdinal("Cuisine"));
-                    int distance = reader.GetInt32(reader.GetOrdinal("Distance"));
-                    string priceRange = reader.GetString(reader.GetOrdinal("PriceRange"));
-
-                    Console.WriteLine($"{id}: {name} - {cuisine} ({distance} m) - Price: {priceRange}");
-                }
+                Console.WriteLine($"{id}: {name} - {cuisine} ({distance} m) - Price: {priceRange}");
             }
         }
     }
