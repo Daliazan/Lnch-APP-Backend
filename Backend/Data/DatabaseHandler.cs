@@ -1,18 +1,19 @@
-using System;
 using Microsoft.Data.Sqlite;
-using Backend.Data; // Rätt placerad 'using' för Backend.Data
 
 namespace Backend.Data
 {
     public class DatabaseHandler
     {
-        // ✅ Ändring av connection string här (Version=3; är borttagen)
-        private readonly string connectionString = "Data Source=lunchapp.db;";
+        private readonly string _connectionString;
 
-        // Initialize the database and create the restaurants table if not exists
+        public DatabaseHandler(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
+
         public void InitializeDatabase()
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
@@ -30,14 +31,13 @@ namespace Backend.Data
                     command.ExecuteNonQuery();
                 }
 
-                Console.WriteLine("Table created or already exists.");
+                Console.WriteLine("✅ Table created or already exists.");
             }
         }
 
-        // Insert restaurant records into the database
         public void InsertRestaurants()
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
@@ -58,28 +58,30 @@ namespace Backend.Data
                     command.ExecuteNonQuery();
                 }
 
-                Console.WriteLine("Restaurants have been inserted into the database.");
+                Console.WriteLine("✅ Restaurants inserted.");
             }
         }
 
-        // Display all restaurant entries from the database
         public void DisplayRestaurants()
         {
-            using var connection = new SqliteConnection(connectionString); // Förenklat
-            connection.Open();
-            string selectQuery = "SELECT * FROM Restaurants";
-
-            using var command = new SqliteCommand(selectQuery, connection); // Förenklat
-            using var reader = command.ExecuteReader(); // Förenklat
-            while (reader.Read())
+            using (var connection = new SqliteConnection(_connectionString))
             {
-                int id = reader.GetInt32(reader.GetOrdinal("Id"));
-                string name = reader.GetString(reader.GetOrdinal("Name"));
-                string cuisine = reader.GetString(reader.GetOrdinal("Cuisine"));
-                int distance = reader.GetInt32(reader.GetOrdinal("Distance"));
-                string priceRange = reader.GetString(reader.GetOrdinal("PriceRange"));
+                connection.Open();
+                string selectQuery = "SELECT * FROM Restaurants";
 
-                Console.WriteLine($"{id}: {name} - {cuisine} ({distance} m) - Price: {priceRange}");
+                using var command = new SqliteCommand(selectQuery, connection);
+                using var reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(reader.GetOrdinal("Id"));
+                    string name = reader.GetString(reader.GetOrdinal("Name"));
+                    string cuisine = reader.GetString(reader.GetOrdinal("Cuisine"));
+                    int distance = reader.GetInt32(reader.GetOrdinal("Distance"));
+                    string priceRange = reader.GetString(reader.GetOrdinal("PriceRange"));
+
+                    Console.WriteLine($"{id}: {name} - {cuisine} ({distance} m) - Price: {priceRange}");
+                }
             }
         }
     }
