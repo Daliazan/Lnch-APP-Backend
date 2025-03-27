@@ -5,18 +5,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
-
+// ✅ Lägg till CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.AllowAnyOrigin()      // 🌍 Tillåter alla domäner (bra för test)
-                  .AllowAnyMethod()      // ✅ GET, POST, PUT osv.
-                  .AllowAnyHeader();     // ✅ Alla headers tillåtna
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
         });
 });
-
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -27,23 +26,23 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ✅ Swagger + CORS i utvecklingsläge
+// ✅ Routing måste komma FÖRE CORS
+app.UseRouting();
+
+// ✅ Använd CORS (oberoende av environment)
+app.UseCors(MyAllowSpecificOrigins);
+
+// ✅ Swagger vid behov
 if (app.Environment.IsDevelopment())
 {
-    app.UseCors(MyAllowSpecificOrigins);
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-    });
+    app.UseSwaggerUI();
 }
-app.UseRouting();
-// ✅ Middleware
-app.UseCors(MyAllowSpecificOrigins);
+
 app.UseAuthorization();
 app.MapControllers();
 
-// ✅ Kör databas-initialisering vid uppstart
+// ✅ Initiera databas och data
 using (var scope = app.Services.CreateScope())
 {
     string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
