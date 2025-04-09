@@ -5,20 +5,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
-// ✅ CORS
+// ✅ Lägg till CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
+
             policy.WithOrigins("http://localhost:5173")
+
+            policy.AllowAnyOrigin()
+
                   .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
+                  .AllowAnyHeader();
         });
 });
 
-// ✅ Entity Framework + SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -28,30 +30,30 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ✅ Swagger + CORS
+// ✅ Routing måste komma FÖRE CORS
+app.UseRouting();
+
+// ✅ Använd CORS (oberoende av environment)
+app.UseCors(MyAllowSpecificOrigins);
+
+// ✅ Swagger vid behov
 if (app.Environment.IsDevelopment())
 {
-    app.UseCors(MyAllowSpecificOrigins);
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-    });
+    app.UseSwaggerUI();
 }
 
-app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthorization();
 app.MapControllers();
 
-// ✅ Använd DatabaseHandler med rätt connection string
+// ✅ Initiera databas och data
 using (var scope = app.Services.CreateScope())
 {
-    string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
+    string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
     var dbHandler = new DatabaseHandler(connectionString);
     dbHandler.InitializeDatabase();
-    dbHandler.InsertRestaurants(); // Skapar + fyller tabellen
-    dbHandler.DisplayRestaurants(); // Valfritt: visar i terminalen
+    dbHandler.InsertRestaurants();
+    dbHandler.DisplayRestaurants();
 }
 
 app.Run();
